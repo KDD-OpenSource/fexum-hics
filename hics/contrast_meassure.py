@@ -105,10 +105,6 @@ class HiCS:
 					slice_conditions.append(self.create_continuous_condition(feature, instances_per_dimension))
 
 			conditional_distribution = self.calculate_conditional_distribution(slice_conditions, target)
-			
-			if conditional_distribution.empty:
-				continue
-
 			if self.types[target] == 'discrete':
 				score = self.discrete_divergence(conditional_distribution, marginal_distribution)
 			else:

@@ -86,7 +86,7 @@ def calculate_redundancies(subspace_contrast: HiCS, features, k = 5, checked_sub
 
 def bivariate_HiCS(filepath, target, drop_discrete = True, alpha = 0.1, iterations = 50, k = 5, redundancy_checks = 500):
 	data = pd.read_csv(filepath)
-	features = [str(column) for column in data.columns.values] if str(column) != target
+	features = [str(column) for column in data.columns.values if str(column) != target]
 	
 	subspace_contrast = hics(data, alpha, iterations)
 	
