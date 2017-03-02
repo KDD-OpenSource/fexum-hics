@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from random import randint
-from HiCS.contrast_meassure import HiCS
+from hics.contrast_meassure import HiCS
 from slice_similarity.slice_similarity import calculate_similarity_matrix
 from slice_similarity.slice_selection import select_by_similarity
 
@@ -88,7 +88,7 @@ def bivariate_HiCS(filepath, target, drop_discrete = True, alpha = 0.1, iteratio
 	data = pd.read_csv(filepath)
 	features = [str(column) for column in data.columns.values if str(column) != target]
 	
-	subspace_contrast = hics(data, alpha, iterations)
+	subspace_contrast = HiCS(data, alpha, iterations)
 	
 	if drop_discrete:
 		features = [ft for ft in features if subspace_contrast.types[ft] != 'discrete']
