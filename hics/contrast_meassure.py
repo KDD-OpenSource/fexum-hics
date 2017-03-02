@@ -93,6 +93,7 @@ class HiCS:
 		marginal_distribution = self.cashed_marginal_distribution(target)
 
 		sum_scores = 0
+		iterations = self.iterations
 
 		for iteration in range(self.iterations):
 			slice_conditions = []
@@ -105,6 +106,11 @@ class HiCS:
 					slice_conditions.append(self.create_continuous_condition(feature, instances_per_dimension))
 
 			conditional_distribution = self.calculate_conditional_distribution(slice_conditions, target)
+			
+			if conditional_distribution.empty:
+				iterations = iterations - 1
+				continue 
+
 			if self.types[target] == 'discrete':
 				score = self.discrete_divergence(conditional_distribution, marginal_distribution)
 			else:
@@ -117,7 +123,7 @@ class HiCS:
 					del(cond['indices'])
 				slices.append({'conditions' : slice_conditions, 'score' : score})
 				
-		avg_score = sum_scores/self.iterations
+		avg_score = sum_scores/iterations
 		
 		if return_slices:
 			return avg_score, slices
