@@ -8,34 +8,56 @@ from random import randint, shuffle
 
 class HiCS:
 
-	def __init__(self, data, alpha, iterations, continuous_divergence = KS, discrete_divergence = KLD):
+	def __init__(self, data, alpha, iterations, continuous_divergence = KS, categorical_divergence = KLD):
 		self.iterations = iterations
 		self.alpha = alpha
 		self.data = data
-		self.discrete_divergence = discrete_divergence
+		self.categorical_divergence = categorical_divergence
 		self.continuous_divergence = continuous_divergence
 		self.sorted_indices = pd.DataFrame()
 		self.distributions = {}
 
 		self.types = {}
+		self.values = {}
 		for column in self.data.columns.values:
 			unique_values = np.unique(self.data[column])
+
 			if self.data[column].dtype == 'object':
-				self.types[column] = 'discrete'
+				self.types[column] = 'categorical'
+				self.values[column] = unique_values
+
 			elif len(unique_values) < 15:
-				self.types[column] = 'discrete'
+				self.types[column] = 'categorical'
+				self.values[column] = unique_values
+
 			else:
 				self.types[column] = 'continuous'
 
 
-	def cashed_marginal_distribution(self, feature):
+	def values(self, feature):
+		if not feature in self.values:
+			return False
+
+		else:
+			return self.values[feature]
+
+
+	def type(self, feature):
+		if not feature in self.types:
+			return False
+
+		else:
+			return self.types[feature]
+
+
+	def cached_marginal_distribution(self, feature):
 		if not feature in self.distributions:
 			values, counts = np.unique(self.data[feature], return_counts = True)
 			self.distributions[feature] = pd.DataFrame({'value' : values, 'count' : counts, 'probability' : counts/len(self.data)}).sort_values(by = 'value')
 		return self.distributions[feature]
 
 
-	def cashed_sorted_indices(self, feature):
+	def cached_sorted_indices(self, feature):
 		if not feature in self.sorted_indices.columns:
 			self.sorted_indices[feature] = self.data.sort_values(by = feature, kind = 'mergesort').index.values
 		return self.sorted_indices[feature]
@@ -54,8 +76,8 @@ class HiCS:
 		return pd.DataFrame({'value' : values,  'count' : counts, 'probability' : probabilities}).sort_values(by = 'value')
 
 
-	def create_discrete_condition(self, feature, instances_per_dimension):
-		feature_distribution = self.cashed_marginal_distribution(feature)
+	def create_categorical_condition(self, feature, instances_per_dimension):
+		feature_distribution = self.cached_marginal_distribution(feature)
 		shuffled_values = np.random.permutation(feature_distribution['value'])
 		selected_values = []
 		current_sum = 0
@@ -73,7 +95,7 @@ class HiCS:
 
 
 	def create_continuous_condition(self, feature, instances_per_dimension):
-		sorted_feature = self.cashed_sorted_indices(feature)
+		sorted_feature = self.cached_sorted_indices(feature)
 		max_start = len(sorted_feature) - instances_per_dimension
 		start = randint(0, max_start)
 		end = start + (instances_per_dimension - 1)
@@ -85,12 +107,37 @@ class HiCS:
 		return {'feature' : feature, 'indices' : indices, 'from_value' : start_value, 'to_value' : end_value}
 
 
+	def output_slices(self, score, conditions, slices):
+		for condition in conditions:
+			ft = condition['feature']
+			
+			if self.types[ft] == 'categorical':
+				to_append = [1*(value in condition['values']) for value in self.values(ft)]
+				if ft in slices['features']:
+					slices['features'][ft].append(to_append)
+				else:
+					slices['features'][ft] = [to_append]
+
+			else:
+				if ft in slices['features']:
+					slices['features'][ft]['start'].append(condition['from_value'])
+					slices['features'][ft]['end'].append(condition['to_value'])
+				else:
+					slices['features'][ft] = {}
+					slices['features'][ft]['start'] = [condition['from_value']]
+					slices['features'][ft]['end'] = [condition['to_value']]
+
+			slices['scores'].append(score)
+
+		return slices 
+
+
 	def calculate_contrast(self, features, target, return_slices = False):
-		slices = []
+		slices = {'features' : {}, 'scores' : []}
 
 		instances_per_dimension = max(round(len(self.data) * math.pow(self.alpha, 1/len(features))), 5)
 
-		marginal_distribution = self.cashed_marginal_distribution(target)
+		marginal_distribution = self.cached_marginal_distribution(target)
 
 		sum_scores = 0
 		iterations = self.iterations
@@ -99,8 +146,8 @@ class HiCS:
 			slice_conditions = []
 
 			for feature in features:
-				if self.types[feature] == 'discrete':
-					slice_conditions.append(self.create_discrete_condition(feature, instances_per_dimension))
+				if self.types[feature] == 'categorical':
+					slice_conditions.append(self.create_categorical_condition(feature, instances_per_dimension))
 
 				else:
 					slice_conditions.append(self.create_continuous_condition(feature, instances_per_dimension))
@@ -111,17 +158,15 @@ class HiCS:
 				iterations = iterations - 1
 				continue 
 
-			if self.types[target] == 'discrete':
-				score = self.discrete_divergence(conditional_distribution, marginal_distribution)
+			if self.types[target] == 'categorical':
+				score = self.categorical_divergence(conditional_distribution, marginal_distribution)
 			else:
 				score = self.continuous_divergence(marginal_distribution, conditional_distribution)
 			
 			sum_scores = sum_scores + score
 
 			if return_slices:
-				for cond in slice_conditions:
-					del(cond['indices'])
-				slices.append({'conditions' : slice_conditions, 'score' : score})
+				slices = self.output_slices(score, slice_conditions, slices)
 				
 		avg_score = sum_scores/iterations
 		
