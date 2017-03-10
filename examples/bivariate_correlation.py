@@ -9,9 +9,7 @@ from slice_similarity.slice_selection import select_by_similarity
 from math import pow
 
 
-
 class ScoredSlices:
-
 	def __init__(self, categorical, continuous, to_keep = 5, threshold = None):
 		self.continuous = pd.Panel({feature : pd.DataFrame(columns = ['end', 'start'])
 			for feature in continuous})
@@ -26,7 +24,6 @@ class ScoredSlices:
 			self.threshold = pow(0.6, len(categorical) + len(continuous))
 		else:
 			self.threshold = threshold
-
 
 	def add_slices(self, slices):
 		temp_continuous = {}
@@ -48,7 +45,6 @@ class ScoredSlices:
 		self.continuous = pd.Panel(temp_continuous)
 		self.categorical = pd.Panel(temp_categorical)
 
-
 	def select_slices(self, similarity):
 		indices = list(range(len(similarity)))
 		selected = []
@@ -63,7 +59,6 @@ class ScoredSlices:
 			indices = [index for index in indices if similarity[selection, index] < self.threshold]
 
 		return selected
-
 
 	def reduce_slices(self):
 		if not self.continuous.empty:
@@ -93,10 +88,7 @@ class ScoredSlices:
 		self.scores = self.scores.loc[selected].reset_index(drop = True)
 
 
-
-
 class IncrementalBivariateCorrelation:
-
 	def __init__(self, data, target, iterations = 10, alpha = 0.1, drop_discrete = True):
 		self.subspace_contrast = HiCS(data, alpha, iterations)
 
@@ -113,7 +105,6 @@ class IncrementalBivariateCorrelation:
 
 		self.subspace_slices = {}
 		self.subspace_relevancies = {}
-
 
 	def subspace_relevancy(self, subspace, cach_slices = False):
 		score, slices = self.subspace_contrast.calculate_contrast(features = subspace, target = self.target, return_slices = True)
@@ -138,7 +129,6 @@ class IncrementalBivariateCorrelation:
 			scored_slices.reduce_slices()
 			return score, scored_slices
 
-
 	def update_relevancies(self):
 		for feature in self.features:
 			score, dummy = self.subspace_relevancy(subspace = [feature], cach_slices = True)
@@ -146,7 +136,6 @@ class IncrementalBivariateCorrelation:
 			self.feature_relevancies.loc[self.feature_relevancies.feature == feature , 'score'] = (old_score * self.relevancy_cycles + score)/(self.relevancy_cycles + 1)
 
 		self.relevancy_cycles = self.relevancy_cycles + 1
-
 
 	def update_redundancies(self, k = 5, redundancy_checks = 20):
 		temp_redundancy_table = pd.Panel({'redundancy' : pd.DataFrame(data = 0, columns = self.features, index = self.features), 
@@ -169,7 +158,6 @@ class IncrementalBivariateCorrelation:
 		self.redundancy_table['redundancy'] = (self.redundancy_table['redundancy'] * self.redundancy_table['weight'] + temp_redundancy_table['redundancy'])/(self.redundancy_table['weight'] + temp_redundancy_table['weight'])
 		self.redundancy_table['weight'] = self.redundancy_table['weight'] + temp_redundancy_table['weight']
 		self.redundancy_table['redundancy'].fillna(0, inplace = True)
-
 
 	def calculate_correlation(self, k = 5, redundancy_checks = 20, callback = print, limit = sys.maxsize):
 		

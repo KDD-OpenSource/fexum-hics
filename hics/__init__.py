@@ -1,4 +1,1 @@
-
-import hics.contrast_meassure
-import hics.divergences
-
+from hics import contrast_meassure, divergences
