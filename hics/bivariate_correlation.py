@@ -4,8 +4,8 @@ import sys
 import json
 from random import randint
 from hics.contrast_meassure import HiCS
-from slice_similarity.slice_similarity import continuous_similarity_matrix, categorical_similarity_matrix
-from slice_similarity.slice_selection import select_by_similarity
+from hics.slice_similarity import continuous_similarity_matrix, categorical_similarity_matrix
+from hics.slice_selection import select_by_similarity
 from math import pow
 
 

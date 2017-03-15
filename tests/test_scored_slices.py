@@ -1,5 +1,5 @@
 from unittest import TestCase
-from bivariate_correlation import ScoredSlices
+from hics.bivariate_correlation import ScoredSlices
 import numpy as np
 import pandas as pd
 

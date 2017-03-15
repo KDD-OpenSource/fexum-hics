@@ -1,5 +1,5 @@
 from unittest import TestCase
-from slice_similarity.slice_similarity import continuous_similarity_matrix, categorical_similarity_matrix
+from hics.slice_similarity import continuous_similarity_matrix, categorical_similarity_matrix
 import numpy as np
 import pandas as pd
 
