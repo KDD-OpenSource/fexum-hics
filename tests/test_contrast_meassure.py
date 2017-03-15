@@ -1,14 +1,13 @@
-import unittest
+from unittest import TestCase
 from hics.contrast_meassure import HiCS
 import numpy as np
 import pandas as pd
 
 
-class Test_HiCS(unittest.TestCase):
+class Test_HiCS(TestCase):
 	alpha = 0.1
 	iterations = 100
 
-	
 	def test_cashed_marginal_distribution(self):
 		correct_result = pd.DataFrame({'value' : [1, 2, 3], 'count' : [1, 2, 5], 'probability' : [0.125, 0.25, 0.625]})
 		dataset = pd.DataFrame({'test_marginal' : [2, 2, 1, 3, 3, 3, 3, 3]})
@@ -16,14 +15,12 @@ class Test_HiCS(unittest.TestCase):
 		dist = test_HiCS.cashed_marginal_distribution('test_marginal')
 		self.assertTrue(dist.equals(correct_result))
 
-
 	def test_cashed_sorted_indices(self):
 		correct_result = np.array([2, 1, 0])
 		dataset = pd.DataFrame({'to_sort' : [10, 5, 0]})
 		test_HiCS = HiCS(dataset, self.alpha, self.iterations)
 		sorted_index = test_HiCS.cashed_sorted_indices('to_sort')
 		self.assertTrue(np.all(correct_result == sorted_index))
-
 
 	def test_calculate_conditional_distribution(self):
 		correct_result = pd.DataFrame({'value' : [0, 1, 2], 'count' : [3, 1, 1], 'probability' : [0.6, 0.2, 0.2]})
@@ -33,7 +30,6 @@ class Test_HiCS(unittest.TestCase):
 		test_HiCS = HiCS(dataset, self.alpha, self.iterations)
 		cond_dist = test_HiCS.calculate_conditional_distribution([condition], target)
 		self.assertTrue(cond_dist.equals(correct_result))
-
 
 	def test_create_discrete_condition(self):
 		dataset = pd.DataFrame({'feature' : [1]*20 + [2]*3 + [0]*1 })

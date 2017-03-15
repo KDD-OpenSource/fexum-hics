@@ -5,9 +5,7 @@ import math
 from random import randint, shuffle
 
 
-
 class HiCS:
-
 	def __init__(self, data, alpha, iterations, continuous_divergence = KS, categorical_divergence = KLD):
 		self.iterations = iterations
 		self.alpha = alpha
@@ -33,14 +31,12 @@ class HiCS:
 			else:
 				self.types[column] = 'continuous'
 
-
 	def values(self, feature):
 		if not feature in self.values:
 			return False
 
 		else:
 			return self.values[feature]
-
 
 	def type(self, feature):
 		if not feature in self.types:
@@ -49,19 +45,16 @@ class HiCS:
 		else:
 			return self.types[feature]
 
-
 	def cached_marginal_distribution(self, feature):
 		if not feature in self.distributions:
 			values, counts = np.unique(self.data[feature], return_counts = True)
 			self.distributions[feature] = pd.DataFrame({'value' : values, 'count' : counts, 'probability' : counts/len(self.data)}).sort_values(by = 'value')
 		return self.distributions[feature]
 
-
 	def cached_sorted_indices(self, feature):
 		if not feature in self.sorted_indices.columns:
 			self.sorted_indices[feature] = self.data.sort_values(by = feature, kind = 'mergesort').index.values
 		return self.sorted_indices[feature]
-
 
 	def calculate_conditional_distribution(self, slice_conditions, target):
 		filter_array = np.array([True]*len(self.data))
@@ -74,7 +67,6 @@ class HiCS:
 		values, counts = np.unique(self.data.loc[filter_array, target], return_counts = True)
 		probabilities = counts/filter_array.sum()
 		return pd.DataFrame({'value' : values,  'count' : counts, 'probability' : probabilities}).sort_values(by = 'value')
-
 
 	def create_categorical_condition(self, feature, instances_per_dimension):
 		feature_distribution = self.cached_marginal_distribution(feature)
@@ -93,7 +85,6 @@ class HiCS:
 		indices = self.data.loc[self.data[feature].isin(selected_values), : ].index.tolist()
 		return {'feature' : feature, 'indices' : indices, 'values' : selected_values}
 
-
 	def create_continuous_condition(self, feature, instances_per_dimension):
 		sorted_feature = self.cached_sorted_indices(feature)
 		max_start = len(sorted_feature) - instances_per_dimension
@@ -105,7 +96,6 @@ class HiCS:
 		indices = self.data.loc[np.logical_and(self.data[feature] >= start_value, self.data[feature] <= end_value), :].index.values.tolist()			#inefficient
 
 		return {'feature' : feature, 'indices' : indices, 'from_value' : start_value, 'to_value' : end_value}
-
 
 	def output_slices(self, score, conditions, slices):
 		for condition in conditions:
@@ -130,7 +120,6 @@ class HiCS:
 			slices['scores'].append(score)
 
 		return slices 
-
 
 	def calculate_contrast(self, features, target, return_slices = False):
 		slices = {'features' : {}, 'scores' : []}

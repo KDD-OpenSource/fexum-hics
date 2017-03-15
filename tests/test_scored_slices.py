@@ -1,10 +1,10 @@
-import unittest
+from unittest import TestCase
 from bivariate_correlation import ScoredSlices
 import numpy as np
 import pandas as pd
 
-class Test_scored_slices(unittest.TestCase):
 
+class Test_scored_slices(TestCase):
 	def test_categorical(self):
 		result = np.array([[1, 0.5, 0.5], [0.5, 1, 0.25], [0.5, 0.25, 1]])
 
@@ -29,7 +29,6 @@ class Test_scored_slices(unittest.TestCase):
 		self.assertTrue(np.all(np.array(scored_slices.continuous['X2', :, 'end']) == np.array([0.5, 1])))
 		self.assertTrue(np.all(np.array(scored_slices.categorical['X3']) == np.array([[1, 0, 1, 0], [1, 1, 1, 0]])))
 		self.assertTrue(np.all(np.array(scored_slices.categorical['X4']) == np.array([[0, 0, 1, 1], [1, 1, 1, 0]])))
-
 
 
 if __name__ == '__main__':
