@@ -117,7 +117,7 @@ class HiCS:
 					slices['features'][ft]['start'] = [condition['from_value']]
 					slices['features'][ft]['end'] = [condition['to_value']]
 
-			slices['scores'].append(score)
+		slices['scores'].append(score)
 
 		return slices 
 
@@ -162,5 +162,5 @@ class HiCS:
 		if return_slices:
 			return avg_score, slices
 		else:
-			return avg_score
+			return avg_score, {}
 
