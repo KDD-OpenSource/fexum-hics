@@ -14,6 +14,15 @@ class AbstractResultStorage:
 	def update_slices(self, new_slices : dict()):
 		raise NotImplementedError()
 
+	def get_redundancies(self):
+		raise NotImplementedError()
+
+	def get_relevancies(self):
+		raise NotImplementedError()
+
+	def get_slices(self):
+		raise NotImplementedError()
+
 
 class DefaultResultStorage(AbstractResultStorage):
 
@@ -26,28 +35,20 @@ class DefaultResultStorage(AbstractResultStorage):
 		self.slices = {}
 
 	def update_relevancies(self, new_relevancies : pd.DataFrame):
-		new_index = [index for index in new_relevancies.index if not index in self.relevancies.index]
-
-		self.relevancies = self.relevancies.append(pd.DataFrame(data = 0, index = new_index, columns = self.relevancies.columns))
-		
-		self.relevancies.loc[new_relevancies.index, 'relevancies'] = (self.relevancies.iteration / (self.relevancies.iteration + new_relevancies.iteration)) * self.relevancies.relevancy + (new_relevancies.iteration / (self.relevancies.iteration + new_relevancies.iteration)) * new_relevancies.relevancy
-
-		self.relevancies.loc[new_relevancies.index, 'iteration'] += new_relevancies.iteration
+		self.relevancies = new_relevancies
 
 	def update_redundancies(self, new_redundancies : pd.DataFrame, new_weights : pd.DataFrame):
-		self.redundancies.redundancy = (self.redundancies.weight / (new_weights + self.redundancies.weight)) * self.redundancies.redundancy + (new_weights / (new_weights + self.redundancies.weight)) * new_redundancies
-		self.redundancies.redundancy.fillna(0, inplace = True)
-
-		self.redundancies.weight += new_weights
+		self.redundancies.redundancy = new_redundancies
+		self.redundancies.weight = new_weights
 
 	def update_slices(self, new_slices):
-		for feature_set, new_slics in new_slices.items():
-			if not feature_set in self.slices:
-				self.slices[feature_set] = new_slices[feature_set]
+		self.slices = new_slices
 
-			else:
-				self.slices[feature_set].add_slices(new_slices[feature_set])
+	def get_redundancies(self):
+		return self.redundancies.redundancy, self.redundancies.weight
 
+	def get_relevancies(self):
+		return self.relevancies
 
-			self.slices[feature_set].reduce_slices()
-
+	def get_slices(self):
+		return self.slices
