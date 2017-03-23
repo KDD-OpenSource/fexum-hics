@@ -16,7 +16,7 @@ class ScoredSlices:
 		self.to_keep = to_keep
 		
 		if threshold == None:
-			self.threshold = pow(0.6, len(categorical) + len(continuous))
+			self.threshold = ScoredSlices.default_threshold(len(categorical) + len(continuous))
 		else:
 			self.threshold = threshold
 
@@ -107,3 +107,28 @@ class ScoredSlices:
 				for name, content in self.continuous.iteritems()})
 
 		self.scores = self.scores.loc[selected].reset_index(drop = True)
+
+	def to_dict(self):
+		continuous_dict = {name : df.to_dict() for name, df in self.continuous.iteritems()}
+		categorical_dict = {name : df.to_dict() for name, df in self.categorical.iteritems()}
+		scores_list = self.scores.tolist()
+		return {'continuous' : continuous_dict, 'categorical' : categorical_dict, 'scores' : scores_list, 'to_keep' : self.to_keep, 'threshold' : self.threshold}
+
+	@staticmethod
+	def default_threshold(dimensions):
+		return pow(0.6, dimensions)
+
+	@staticmethod
+	def from_dict(dictionary):
+		continuous_panel = pd.Panel({name : pd.DataFrame.from_dict(desciption) 
+			for name, desciption in dictionary['continuous'].items()})
+		categorical_panel = pd.Panel({name : pd.DataFrame.from_dict(desciption) 
+			for name, desciption in dictionary['categorical'].items()})
+		scores_series = pd.Series(dictionary['scores'])
+
+		slices = ScoredSlices([], [], to_keep = dictionary['to_keep'], threshold = dictionary['threshold'])
+		slices.categorical = categorical_panel
+		slices.continuous = continuous_panel
+		slices.scores = scores_series
+
+		return slices
