@@ -162,5 +162,5 @@ class HiCS:
 		if return_slices:
 			return avg_score, slices
 		else:
-			return avg_score, {}
+			return avg_score
 
