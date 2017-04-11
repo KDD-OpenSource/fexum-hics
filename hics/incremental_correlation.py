@@ -54,21 +54,21 @@ class IncrementalCorrelation:
 
 		self.result_storage.update_slices(current_slices)
 
-	def _calculate_contrast(self, features, target, slices_storage : dict() = None):
-		if slices_storage == None:
-			return self.subspace_contrast.calculate_contrast(features, target, False)
+	def _relevancy_dict_to_df(self, new_scores):
+		indices = [tuple(index) for index in new_scores]
+		scores = [score for index, score in new_scores.items()]
+		new_relevancies = pd.DataFrame(data = scores ,index = indices)
+		return new_relevancies
 
-		else:
-			score, slices = self.subspace_contrast.calculate_contrast(features, target, True)
-			subspace_str = tuple(sorted(features))
+	def _add_slices_to_dict(self, subspace, slices, slices_store):
+		subspace_tuple = tuple(sorted(subspace))
+		if not subspace_tuple in slices_store:
+			categorical = [{'name' : ft, 'values' : self.subspace_contrast.values(ft)} for ft in subspace if self.subspace_contrast.type(ft) == 'categorical']
+			continuous = [ft for ft in subspace if self.subspace_contrast.type(ft) == 'continuous']
+			slices_store[subspace_tuple] = ScoredSlices(categorical, continuous)
 
-			if not subspace_str in slices_storage:
-				categorical = [{'name' : ft, 'values' : self.subspace_contrast.values(ft)} for ft in features if self.subspace_contrast.type(ft) == 'categorical']
-				continuous = [ft for ft in features if self.subspace_contrast.type(ft) == 'continuous']
-				slices_storage[subspace_str] = ScoredSlices(categorical, continuous)
-
-			slices_storage[subspace_str].add_slices(slices)
-			return score
+		slices_store[subspace_tuple].add_slices(slices)
+		return slices_store
 
 	def update_bivariate_relevancies(self, runs = 5):
 		new_slices = {}
@@ -76,39 +76,46 @@ class IncrementalCorrelation:
 
 		for i in range(runs):
 			for feature in self.features:
-				subspace_str = tuple(feature)
-				new_scores[subspace_str]['relevancy'] += self._calculate_contrast([feature], self.target, new_slices)
-				new_scores[subspace_str]['iteration'] += 1
-		
-		indices = [tuple(index) for index in new_scores]
-		scores = [score for index, score in new_scores.items()]
-		new_relevancies = pd.DataFrame(data = scores ,index = indices)
+				subspace_tuple = tuple(feature)
+				subspace_score, subspace_slices = self.subspace_contrast.calculate_contrast([feature], self.target, True)
+
+				new_slices = self._add_slices_to_dict([feature], subspace_slices, new_slices)
+
+				new_scores[subspace_tuple]['relevancy'] += subspace_score
+				new_scores[subspace_tuple]['iteration'] += 1
+
+		new_relevancies = self._relevancy_dict_to_df(new_scores)
 		new_relevancies.relevancy /= new_relevancies.iteration
 
 		self._update_relevancy_table(new_relevancies)
 		self._update_slices(new_slices)
-
-	def update_multivariate_relevancies(self, k = 5, runs = 5):
+				
+	def update_multivariate_relevancies(self, fixed_features = [], k = 5, runs = 5):
 		new_slices = {}
 		new_scores = {}
 
+		feature_list = [feature for feature in self.features if not feature in fixed_features]
+		max_k = k - len(fixed_features)
+
 		for i in range(runs):
-			number_features = randint(1, k)
-			selected_features = np.random.permutation(self.features)[0:number_features + 1].tolist()
-			target = selected_features[number_features]
-			subspace = selected_features[0:number_features]
-			subspace_str = tuple(sorted(subspace))
-			score = self._calculate_contrast(subspace, target, new_slices)
+			subspace = fixed_features[:]
+			
+			if 0 < max_k:
+				end_index = randint(1, max_k + 1)
+				subspace += np.random.permutation(feature_list)[0:end_index].tolist()
 
-			if not subspace_str in new_scores:
-				new_scores[subspace_str] = {'relevancy' : score, 'iteration' : 1}
-			else:
-				new_scores[subspace_str]['relevancy'] += score
-				new_scores[subspace_str]['iteration'] += 1
+			subspace_tuple = tuple(sorted(subspace))
+			subspace_score, subspace_slices = self.subspace_contrast.calculate_contrast(subspace, self.target, True)
+			
+			if not subspace_tuple in new_scores:	
+				new_scores[subspace_tuple] = {'relevancy' : 0, 'iteration' : 0}
 
-		indices = [tuple(index) for index in new_scores]
-		scores = [score for index, score in new_scores.items()]
-		new_relevancies = pd.DataFrame(data = scores ,index = indices)
+			new_scores[subspace_tuple]['relevancy'] += subspace_score
+			new_scores[subspace_tuple]['iteration'] += 1
+			
+			new_slices = self._add_slices_to_dict(subspace, subspace_slices, new_slices)
+
+		new_relevancies = self._relevancy_dict_to_df(new_scores)
 		new_relevancies.relevancy /= new_relevancies.iteration
 
 		self._update_relevancy_table(new_relevancies)
@@ -124,7 +131,7 @@ class IncrementalCorrelation:
 			target = selected_features[number_features]
 			subspace = selected_features[0:number_features]
 			
-			score, _dummy = self._calculate_contrast(features = subspace, target = target)
+			score = self.subspace_contrast.calculate_contrast(subspace, target, False)
 
 			for ft in subspace:
 				new_redundancies.loc[ft, target] = new_redundancies.loc[ft, target] + score 
@@ -137,22 +144,5 @@ class IncrementalCorrelation:
 
 		self.result_storage.update_redundancies(new_redundancies, new_weights)
 
-	def feature_relevancies(self, features, runs = 1):
-		subspace_str = tuple(sorted(features))
-
-		new_slices = {}
-		new_score = {subspace_str : {'relevancy' : 0, 'iteration' : 0}}
-
-		for i in range(runs):
-			new_score[subspace_str]['relevancy'] += self._calculate_contrast(features, self.target, new_slices)
-			new_score[subspace_str]['iteration'] += 1
-
-		indices = [tuple(index) for index in new_scores]
-		scores = [score for index, score in new_scores.items()]
-		new_relevancies = pd.DataFrame(data = scores ,index = indices)
-		new_relevancies.relevancy /= new_relevancies.iteration
-
-		self._update_relevancy_table(new_relevancies)
-		self._update_slices(new_slices)
 
 
