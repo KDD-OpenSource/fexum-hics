@@ -6,7 +6,7 @@ from hics.slice_selection import select_by_similarity
 
 class ScoredSlices:
 	def __init__(self, categorical, continuous, to_keep = 5, threshold = None):
-		self.continuous = pd.Panel({feature : pd.DataFrame(columns = ['end', 'start'])
+		self.continuous = pd.Panel({feature : pd.DataFrame(columns = ['to_value', 'from_value'])
 			for feature in continuous})
 
 		self.categorical = pd.Panel({feature['name'] : pd.DataFrame(columns = feature['values'])

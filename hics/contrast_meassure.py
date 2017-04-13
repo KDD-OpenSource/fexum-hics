@@ -110,12 +110,12 @@ class HiCS:
 
 			else:
 				if ft in slices['features']:
-					slices['features'][ft]['start'].append(condition['from_value'])
-					slices['features'][ft]['end'].append(condition['to_value'])
+					slices['features'][ft]['from_value'].append(condition['from_value'])
+					slices['features'][ft]['to_value'].append(condition['to_value'])
 				else:
 					slices['features'][ft] = {}
-					slices['features'][ft]['start'] = [condition['from_value']]
-					slices['features'][ft]['end'] = [condition['to_value']]
+					slices['features'][ft]['from_value'] = [condition['from_value']]
+					slices['features'][ft]['to_value'] = [condition['to_value']]
 
 		slices['scores'].append(score)
 

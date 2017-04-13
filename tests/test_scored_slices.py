@@ -14,8 +14,8 @@ class Test_scored_slices(TestCase):
 		slices = {'features' : {
 			'X3' : [[1, 1, 1, 0], [0, 0, 1, 1], [1, 0, 1, 0]],
 			'X4' : [[1, 1, 1, 0], [1, 0, 1, 0], [0, 0, 1, 1]],
-			'X1' : {'start' : [0.5, 0, 0], 'end' : [1, 0.5, 0.75]},
-			'X2' : {'start' : [0.5, 0, 0], 'end' : [1, 0.75, 0.5]}},
+			'X1' : {'from_value' : [0.5, 0, 0], 'to_value' : [1, 0.5, 0.75]},
+			'X2' : {'from_value' : [0.5, 0, 0], 'to_value' : [1, 0.75, 0.5]}},
 			'scores' : [1, 2, 3]}
 
 		scored_slices = ScoredSlices(categorical, continuous, 2, 0.1)
@@ -23,10 +23,10 @@ class Test_scored_slices(TestCase):
 		scored_slices.reduce_slices()
 
 		self.assertTrue(len(scored_slices.continuous.iloc[0].index) == 2)
-		self.assertTrue(np.all(np.array(scored_slices.continuous['X1', :, 'start']) == np.array([0, 0.5])))
-		self.assertTrue(np.all(np.array(scored_slices.continuous['X1', :, 'end']) == np.array([0.75, 1])))
-		self.assertTrue(np.all(np.array(scored_slices.continuous['X2', :, 'start']) == np.array([0, 0.5])))
-		self.assertTrue(np.all(np.array(scored_slices.continuous['X2', :, 'end']) == np.array([0.5, 1])))
+		self.assertTrue(np.all(np.array(scored_slices.continuous['X1', :, 'from_value']) == np.array([0, 0.5])))
+		self.assertTrue(np.all(np.array(scored_slices.continuous['X1', :, 'to_value']) == np.array([0.75, 1])))
+		self.assertTrue(np.all(np.array(scored_slices.continuous['X2', :, 'from_value']) == np.array([0, 0.5])))
+		self.assertTrue(np.all(np.array(scored_slices.continuous['X2', :, 'to_value']) == np.array([0.5, 1])))
 		self.assertTrue(np.all(np.array(scored_slices.categorical['X3']) == np.array([[1, 0, 1, 0], [1, 1, 1, 0]])))
 		self.assertTrue(np.all(np.array(scored_slices.categorical['X4']) == np.array([[0, 0, 1, 1], [1, 1, 1, 0]])))
 
