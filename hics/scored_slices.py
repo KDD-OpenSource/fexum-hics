@@ -114,6 +114,21 @@ class ScoredSlices:
 		scores_list = self.scores.tolist()
 		return {'continuous' : continuous_dict, 'categorical' : categorical_dict, 'scores' : scores_list, 'to_keep' : self.to_keep, 'threshold' : self.threshold}
 
+	def to_output(self):
+		result = []
+		for index, value in self.scores.iteritems():
+		    current_result = {'deviation' : value, 'features' : {}}
+		    
+		    if len(self.continuous.keys()) > 0:
+		    	for feature, values in self.continuous.major_xs(index).iteritems():
+		        	current_result['features'][feature] = values.to_dict()
+		    
+		    if len(self.categorical.keys()) > 0:
+		    	for feature, values in self.categorical.major_xs(index).iteritems():
+		        	current_result['features'][feature] = list(values.index[values == 1])
+		    result.append(current_result)
+		return result
+
 	@staticmethod
 	def default_threshold(dimensions):
 		return pow(0.6, dimensions)
