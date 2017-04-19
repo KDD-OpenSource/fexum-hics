@@ -114,18 +114,18 @@ class ScoredSlices:
 		scores_list = self.scores.tolist()
 		return {'continuous' : continuous_dict, 'categorical' : categorical_dict, 'scores' : scores_list, 'to_keep' : self.to_keep, 'threshold' : self.threshold}
 
-	def to_output(self):
+	def to_output(self, name_mapping=ScoredSlices.default_name_mapping):
 		result = []
 		for index, value in self.scores.iteritems():
 		    current_result = {'deviation' : value, 'features' : {}}
 		    
 		    if len(self.continuous.keys()) > 0:
 		    	for feature, values in self.continuous.major_xs(index).iteritems():
-		        	current_result['features'][feature] = values.to_dict()
+		        	current_result['features'][name_mapping(feature)] = values.to_dict()
 		    
 		    if len(self.categorical.keys()) > 0:
 		    	for feature, values in self.categorical.major_xs(index).iteritems():
-		        	current_result['features'][feature] = list(values.index[values == 1])
+		        	current_result['features'][name_mapping(feature)] = list(values.index[values == 1])
 		    result.append(current_result)
 		return result
 
@@ -147,3 +147,7 @@ class ScoredSlices:
 		slices.scores = scores_series
 
 		return slices
+
+	@staticmethod
+	def default_name_mapping(name):
+		return name
