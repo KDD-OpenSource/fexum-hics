@@ -96,12 +96,13 @@ class IncrementalCorrelation:
 
 		feature_list = [feature for feature in self.features if not feature in fixed_features]
 		max_k = k - len(fixed_features)
+		max_k = min(max_k, len(feature_list))
 
 		for i in range(runs):
 			subspace = fixed_features[:]
 			
 			if 0 < max_k:
-				end_index = randint(1, max_k + 1)
+				end_index = randint(1, max_k)
 				subspace += np.random.permutation(feature_list)[0:end_index].tolist()
 
 			subspace_tuple = tuple(sorted(subspace))
@@ -124,6 +125,8 @@ class IncrementalCorrelation:
 	def update_redundancies(self, k = 5, runs = 10):
 		new_redundancies = pd.DataFrame(data = 0, columns = self.features, index = self.features)
 		new_weights = pd.DataFrame(data = 0, columns = self.features, index = self.features)
+
+		k = min(k, len(self.features)-1)
 
 		for i in range(runs):
 			number_features = randint(1, k)
