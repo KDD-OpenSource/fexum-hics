@@ -114,7 +114,10 @@ class ScoredSlices:
 		scores_list = self.scores.tolist()
 		return {'continuous' : continuous_dict, 'categorical' : categorical_dict, 'scores' : scores_list, 'to_keep' : self.to_keep, 'threshold' : self.threshold}
 
-	def to_output(self, name_mapping=ScoredSlices.default_name_mapping):
+	def to_output(self, name_mapping=None):
+		if name_mapping == None:
+			name_mapping = ScoredSlices.default_name_mapping
+
 		result = []
 		for index, value in self.scores.iteritems():
 		    current_result = {'deviation' : value, 'features' : {}}
