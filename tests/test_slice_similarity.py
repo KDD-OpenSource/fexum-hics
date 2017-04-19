@@ -20,8 +20,8 @@ class Test_slice_similarity(TestCase):
 		result = np.array([[1, 0, 0], [0, 1, 2/3], [0, 2/3, 1]])
 
 		continuous = pd.Panel({
-			'X3' : pd.DataFrame({'start' : [0.5, 0, 0], 'end' : [1, 0.5, 0.75]}),
-			'X4' : pd.DataFrame({'start' : [0.5, 0, 0], 'end' : [1, 0.75, 0.5]})
+			'X3' : pd.DataFrame({'from_value' : [0.5, 0, 0], 'to_value' : [1, 0.5, 0.75]}),
+			'X4' : pd.DataFrame({'from_value' : [0.5, 0, 0], 'to_value' : [1, 0.75, 0.5]})
 			})
 
 		similarity = continuous_similarity_matrix(continuous)

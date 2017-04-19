@@ -6,7 +6,7 @@ from hics.slice_selection import select_by_similarity
 
 class ScoredSlices:
 	def __init__(self, categorical, continuous, to_keep = 5, threshold = None):
-		self.continuous = pd.Panel({feature : pd.DataFrame(columns = ['end', 'start'])
+		self.continuous = pd.Panel({feature : pd.DataFrame(columns = ['to_value', 'from_value'])
 			for feature in continuous})
 
 		self.categorical = pd.Panel({feature['name'] : pd.DataFrame(columns = feature['values'])
@@ -114,6 +114,21 @@ class ScoredSlices:
 		scores_list = self.scores.tolist()
 		return {'continuous' : continuous_dict, 'categorical' : categorical_dict, 'scores' : scores_list, 'to_keep' : self.to_keep, 'threshold' : self.threshold}
 
+	def to_output(self, name_mapping=ScoredSlices.default_name_mapping):
+		result = []
+		for index, value in self.scores.iteritems():
+		    current_result = {'deviation' : value, 'features' : {}}
+		    
+		    if len(self.continuous.keys()) > 0:
+		    	for feature, values in self.continuous.major_xs(index).iteritems():
+		        	current_result['features'][name_mapping(feature)] = values.to_dict()
+		    
+		    if len(self.categorical.keys()) > 0:
+		    	for feature, values in self.categorical.major_xs(index).iteritems():
+		        	current_result['features'][name_mapping(feature)] = list(values.index[values == 1])
+		    result.append(current_result)
+		return result
+
 	@staticmethod
 	def default_threshold(dimensions):
 		return pow(0.6, dimensions)
@@ -132,3 +147,7 @@ class ScoredSlices:
 		slices.scores = scores_series
 
 		return slices
+
+	@staticmethod
+	def default_name_mapping(name):
+		return name

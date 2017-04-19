@@ -8,8 +8,8 @@ def continuous_similarity_matrix(dfs):
 	overlap = np.zeros((length, length))
 	
 	for index, df in dfs.iteritems():
-		end = np.array([df.end] * length)
-		start = np.array([df.start] * length)
+		end = np.array([df['to_value']] * length)
+		start = np.array([df['from_value']] * length)
 		min_range = np.minimum((end - start), (end - start).T)
 		min_overlap_range = np.minimum((end.T - start), (end.T - start).T)
 		
