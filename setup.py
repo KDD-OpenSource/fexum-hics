@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
 	name='hics', 
-	version='0.8',                  
+	version='0.9',                  
 	author='Marcus Pappik',
 	install_requires=[
 		'pandas',
