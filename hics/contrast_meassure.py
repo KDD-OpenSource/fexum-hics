@@ -31,14 +31,14 @@ class HiCS:
 			else:
 				self.types[column] = 'continuous'
 
-	def values(self, feature):
+	def get_values(self, feature):
 		if not feature in self.values:
 			return False
 
 		else:
 			return self.values[feature]
 
-	def type(self, feature):
+	def get_type(self, feature):
 		if not feature in self.types:
 			return False
 
@@ -102,7 +102,7 @@ class HiCS:
 			ft = condition['feature']
 			
 			if self.types[ft] == 'categorical':
-				to_append = [1*(value in condition['values']) for value in self.values(ft)]
+				to_append = [1*(value in condition['values']) for value in self.get_values(ft)]
 				if ft in slices['features']:
 					slices['features'][ft].append(to_append)
 				else:
