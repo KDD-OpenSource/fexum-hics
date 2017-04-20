@@ -72,11 +72,11 @@ class IncrementalCorrelation:
 
 	def update_bivariate_relevancies(self, runs = 5):
 		new_slices = {}
-		new_scores = {tuple(feature) : {'relevancy' : 0, 'iteration' : 0} for feature in self.features}
+		new_scores = {(feature,) : {'relevancy' : 0, 'iteration' : 0} for feature in self.features}
 
 		for i in range(runs):
 			for feature in self.features:
-				subspace_tuple = tuple(feature)
+				subspace_tuple = (feature,)
 				subspace_score, subspace_slices = self.subspace_contrast.calculate_contrast([feature], self.target, True)
 
 				new_slices = self._add_slices_to_dict([feature], subspace_slices, new_slices)
