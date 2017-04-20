@@ -15,7 +15,7 @@ class IncrementalCorrelation:
 		self.features = [str(ft) for ft in data.columns.values if str(ft) != target]
 
 		if drop_discrete:
-			self.features = [ft for ft in self.features if self.subspace_contrast.types[ft] != 'discrete']
+			self.features = [ft for ft in self.features if self.subspace_contrast.get_type(ft) != 'discrete']
 
 		self.result_storage = result_storage
 
@@ -63,8 +63,8 @@ class IncrementalCorrelation:
 	def _add_slices_to_dict(self, subspace, slices, slices_store):
 		subspace_tuple = tuple(sorted(subspace))
 		if not subspace_tuple in slices_store:
-			categorical = [{'name' : ft, 'values' : self.subspace_contrast.values(ft)} for ft in subspace if self.subspace_contrast.type(ft) == 'categorical']
-			continuous = [ft for ft in subspace if self.subspace_contrast.type(ft) == 'continuous']
+			categorical = [{'name' : ft, 'values' : self.subspace_contrast.get_values(ft)} for ft in subspace if self.subspace_contrast.get_type(ft) == 'categorical']
+			continuous = [ft for ft in subspace if self.subspace_contrast.get_type(ft) == 'continuous']
 			slices_store[subspace_tuple] = ScoredSlices(categorical, continuous)
 
 		slices_store[subspace_tuple].add_slices(slices)
