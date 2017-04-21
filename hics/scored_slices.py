@@ -6,11 +6,11 @@ from hics.slice_selection import select_by_similarity
 
 class ScoredSlices:
 	def __init__(self, categorical, continuous, to_keep = 5, threshold = None):
-		self.continuous = pd.Panel({feature : pd.DataFrame(columns = ['to_value', 'from_value'])
-			for feature in continuous})
+		self.continuous = {feature : pd.DataFrame(columns = ['to_value', 'from_value'])
+			for feature in continuous}
 
-		self.categorical = pd.Panel({feature['name'] : pd.DataFrame(columns = feature['values'])
-			for feature in categorical})
+		self.categorical = {feature['name'] : pd.DataFrame(columns = feature['values'])
+			for feature in categorical}
 
 		self.scores = pd.Series()
 		self.to_keep = to_keep
@@ -28,43 +28,33 @@ class ScoredSlices:
 			self.add_from_object(slices)
 
 	def add_from_object(self, slices):
-		temp_continuous = {}
-		temp_categorical = {}
-
 		self.scores = self.scores.append(pd.Series(slices.scores)).sort_values(ascending = False, inplace = False)
 
-		for feature, df in slices.continuous.iteritems():
-			temp_continuous[feature] = pd.concat([self.continuous[feature], df], ignore_index = True)
-			temp_continuous[feature] = temp_continuous[feature].loc[self.scores.index, :].reset_index(drop = True)
+		for feature, df in slices.continuous.items():
+			self.continuous[feature] = pd.concat([self.continuous[feature], df], ignore_index = True)
+			self.continuous[feature] = self.continuous[feature].loc[self.scores.index, :].reset_index(drop = True)
 
-		for feature, df in slices.categorical.iteritems():
-			temp_categorical[feature] = pd.concat([self.categorical[feature], df], ignore_index = True)
-			temp_categorical[feature] = temp_categorical[feature].loc[self.scores.index, :].reset_index(drop = True)
+		for feature, df in slices.categorical.items():
+			self.categorical[feature] = pd.concat([self.categorical[feature], df], ignore_index = True)
+			self.categorical[feature] = self.categorical[feature].loc[self.scores.index, :].reset_index(drop = True)
 
 		self.scores.reset_index(drop = True, inplace = True)
-		self.continuous = pd.Panel(temp_continuous)
-		self.categorical = pd.Panel(temp_categorical)
 
 	def add_from_dict(self, slices):
-		temp_continuous = {}
-		temp_categorical = {}
-
 		new_scores = pd.Series(slices['scores'])
 		self.scores = self.scores.append(new_scores, ignore_index = True).sort_values(ascending = False, inplace = False)
 
-		for feature in self.continuous.items.values:
+		for feature in self.continuous:
 			content = pd.DataFrame(slices['features'][feature])
-			temp_continuous[feature] = pd.concat([self.continuous[feature], content], ignore_index = True)
-			temp_continuous[feature] = temp_continuous[feature].loc[self.scores.index, :].reset_index(drop = True)
+			self.continuous[feature] = pd.concat([self.continuous[feature], content], ignore_index = True)
+			self.continuous[feature] = self.continuous[feature].loc[self.scores.index, :].reset_index(drop=True)
 
-		for feature in self.categorical.items.values:
-			content = pd.DataFrame(slices['features'][feature], columns = self.categorical[feature].columns.values)
-			temp_categorical[feature] = pd.concat([self.categorical[feature], content], ignore_index = True)
-			temp_categorical[feature] = temp_categorical[feature].loc[self.scores.index, :].reset_index(drop = True)
+		for feature in self.categorical:
+			content = pd.DataFrame(slices['features'][feature], columns = self.categorical[feature].columns)
+			self.categorical[feature] = pd.concat([self.categorical[feature], content], ignore_index=True)
+			self.categorical[feature] = self.categorical[feature].loc[self.scores.index, :].reset_index(drop=True)
 
-		self.scores.reset_index(drop = True, inplace = True)
-		self.continuous = pd.Panel(temp_continuous)
-		self.categorical = pd.Panel(temp_categorical)
+		self.scores.reset_index(drop=True, inplace=True)
 
 	def select_slices(self, similarity):
 		indices = list(range(len(similarity)))
@@ -82,12 +72,12 @@ class ScoredSlices:
 		return selected
 
 	def reduce_slices(self):
-		if not self.continuous.empty:
+		if self.continuous:
 			continuous_similarity = continuous_similarity_matrix(self.continuous)
 		else:
 			continuous_similarity = np.ones((len(self.scores), len(self.scores)))
 
-		if not self.categorical.empty:
+		if self.categorical:
 			categorical_similarity = categorical_similarity_matrix(self.categorical)
 		else:
 			categorical_similarity = np.ones((len(self.scores), len(self.scores)))
@@ -96,21 +86,19 @@ class ScoredSlices:
 
 		selected = self.select_slices(similarity)
 
-		if not self.categorical.empty:
-			self.categorical = self.categorical[:, selected, :]
-			self.categorical = pd.Panel({name : content.reset_index(drop = True) 
-				for name, content in self.categorical.iteritems()})
+		if self.categorical:
+			self.categorical = {key : df.loc[selected, :].reset_index(drop=True) 
+				for key, df in self.categorical.items()}
 		
-		if not self.continuous.empty:
-			self.continuous = self.continuous[:, selected, :]
-			self.continuous = pd.Panel({name : content.reset_index(drop = True) 
-				for name, content in self.continuous.iteritems()})
+		if self.continuous:
+			self.continuous = {key : df.loc[selected, :].reset_index(drop=True) 
+				for key, df in self.continuous.items()}
 
 		self.scores = self.scores.loc[selected].reset_index(drop = True)
 
 	def to_dict(self):
-		continuous_dict = {name : df.to_dict(orient='list') for name, df in self.continuous.iteritems()}
-		categorical_dict = {name : df.to_dict(orient='list') for name, df in self.categorical.iteritems()}
+		continuous_dict = {name : df.to_dict(orient='list') for name, df in self.continuous.items()}
+		categorical_dict = {name : df.to_dict(orient='list') for name, df in self.categorical.items()}
 		scores_list = self.scores.tolist()
 		return {'continuous' : continuous_dict, 'categorical' : categorical_dict, 'scores' : scores_list, 'to_keep' : self.to_keep, 'threshold' : self.threshold}
 
@@ -120,16 +108,17 @@ class ScoredSlices:
 
 		result = []
 		for index, value in self.scores.iteritems():
-		    current_result = {'deviation' : value, 'features' : {}}
-		    
-		    if len(self.continuous.keys()) > 0:
-		    	for feature, values in self.continuous.major_xs(index).iteritems():
-		        	current_result['features'][name_mapping(feature)] = values.to_dict()
-		    
-		    if len(self.categorical.keys()) > 0:
-		    	for feature, values in self.categorical.major_xs(index).iteritems():
-		        	current_result['features'][name_mapping(feature)] = list(values.index[values == 1])
-		    result.append(current_result)
+			current_result = {'deviation' : value, 'features' : {}}
+			
+			if self.continuous:
+				for feature, df in self.continuous.items():
+					current_result['features'][name_mapping(feature)] = df.loc[index, :].to_dict()
+			
+			if self.categorical:
+				for feature, df in self.categorical.items():
+					selected_values = df.columns[df.loc[index, :] == 1].tolist()
+					current_result['features'][name_mapping(feature)] = selected_values
+			result.append(current_result)
 		return result
 
 	@staticmethod
@@ -138,15 +127,15 @@ class ScoredSlices:
 
 	@staticmethod
 	def from_dict(dictionary):
-		continuous_panel = pd.Panel({name : pd.DataFrame(description) 
-			for name, description in dictionary['continuous'].items()})
-		categorical_panel = pd.Panel({name : pd.DataFrame(description) 
-			for name, description in dictionary['categorical'].items()})
+		continuous = {name : pd.DataFrame(description) 
+			for name, description in dictionary['continuous'].items()}
+		categorical = {name : pd.DataFrame(description) 
+			for name, description in dictionary['categorical'].items()}
 		scores_series = pd.Series(dictionary['scores'])
 
 		slices = ScoredSlices([], [], to_keep = dictionary['to_keep'], threshold = dictionary['threshold'])
-		slices.categorical = categorical_panel
-		slices.continuous = continuous_panel
+		slices.categorical = categorical
+		slices.continuous = continuous
 		slices.scores = scores_series
 
 		return slices

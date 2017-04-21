@@ -3,11 +3,15 @@ import pandas as pd
 
 
 def continuous_similarity_matrix(dfs):
-	length = len(dfs.major_axis)
+	if dfs:
+		length = len(list(dfs.values())[0])
+	else:
+		length = 0
+
 	volumn = np.zeros((length, length))
 	overlap = np.zeros((length, length))
 	
-	for index, df in dfs.iteritems():
+	for index, df in dfs.items():
 		end = np.array([df['to_value']] * length)
 		start = np.array([df['from_value']] * length)
 		min_range = np.minimum((end - start), (end - start).T)
@@ -33,11 +37,15 @@ def continuous_similarity_matrix(dfs):
 
 
 def categorical_similarity_matrix(dfs):
-	length = len(dfs.major_axis)
+	if dfs:
+		length = len(list(dfs.values())[0])
+	else:
+		length = 0
+		
 	volumn = np.zeros((length, length))
 	overlap = np.zeros((length, length))
 
-	for index, df in dfs.iteritems():
+	for index, df in dfs.items():
 
 		data_array = np.array([np.array(df).tolist()] * len(df))
 		size_array = np.apply_along_axis(lambda x: (x*1).sum(), 2, data_array)
