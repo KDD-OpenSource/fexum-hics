@@ -39,8 +39,8 @@ class Test_scored_slices(TestCase):
 		ft_cat_2 = pd.DataFrame({'1' : [1], '2' : [0]})
 		ft_con_1 = pd.DataFrame({'from' : [2], 'to' : [3]})
 		ft_con_2 = pd.DataFrame({'from' : [8], 'to' : [9]})
-		continuous = pd.Panel({'ft_con_1' : ft_con_1, 'ft_con_2' : ft_con_2})
-		categorical = pd.Panel({'ft_cat_1' : ft_cat_1, 'ft_cat_2' : ft_cat_2})
+		continuous = {'ft_con_1' : ft_con_1, 'ft_con_2' : ft_con_2}
+		categorical = {'ft_cat_1' : ft_cat_1, 'ft_cat_2' : ft_cat_2}
 		scores = pd.Series([2.5])
 		
 		scored_slices = ScoredSlices([], [], 2, 0.1)

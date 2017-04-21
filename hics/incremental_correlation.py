@@ -43,12 +43,12 @@ class IncrementalCorrelation:
 	def _update_slices(self, new_slices):
 		current_slices = self.result_storage.get_slices()
 
-		for feature_set, new_slics in new_slices.items():
+		for feature_set, slices_to_add in new_slices.items():
 			if not feature_set in current_slices:
-				current_slices[feature_set] = new_slices[feature_set]
+				current_slices[feature_set] = slices_to_add
 
 			else:
-				current_slices[feature_set].add_slices(new_slices[feature_set])
+				current_slices[feature_set].add_slices(slices_to_add)
 
 			current_slices[feature_set].reduce_slices()
 
