@@ -38,7 +38,7 @@ class IncrementalCorrelation:
 		current_redundancies.fillna(0, inplace = True)
 		current_weights += new_weights
 
-		self.result_storage.update_redundancies(current_redundancies)
+		self.result_storage.update_redundancies(current_redundancies, current_weights)
 
 	def _update_slices(self, new_slices):
 		current_slices = self.result_storage.get_slices()
@@ -145,7 +145,7 @@ class IncrementalCorrelation:
 		new_redundancies = new_redundancies / new_weights
 		new_redundancies.fillna(0, inplace = True)
 
-		self.result_storage.update_redundancies(new_redundancies, new_weights)
+		self._update_redundancy_table(new_weights, new_redundancies)
 
 
 
