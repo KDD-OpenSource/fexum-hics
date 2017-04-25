@@ -116,7 +116,7 @@ class ScoredSlices:
 			
 			if self.categorical:
 				for feature, df in self.categorical.items():
-					selected_values = df.columns[df.loc[index, :] == 1].tolist()
+					selected_values = df.columns[df.loc[index, :] == 1].astype(float).tolist()	# TODO: remove that bullshit
 					current_result['features'][name_mapping(feature)] = selected_values
 			result.append(current_result)
 		return result
