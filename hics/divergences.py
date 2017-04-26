@@ -6,7 +6,7 @@ def KLD(P: pd.DataFrame, Q: pd.DataFrame, homogenous=False):
 	if not homogenous:
 		P = P.loc[P['value'].isin(Q['value']),].reset_index(drop = True)
 		Q = Q.loc[Q['value'].isin(P['value']),].reset_index(drop = True)
-	return (P.probability * np.log10(P.probability / Q.probability)).sum()
+	return (P.probability * np.log2(P.probability / Q.probability)).sum()
 
 
 def JSD(P: pd.DataFrame, Q: pd.DataFrame):
