@@ -40,12 +40,12 @@ class IncrementalCorrelation:
     def _update_redundancy_table(self, new_weights, new_redundancies):
         current_redundancies, current_weights = self.result_storage.get_redundancies()
 
-        current_redundancies[current_weights == 0] = np.inf
+        current_redundancies[current_weights < 1] = np.inf
 
         current_redundancies = np.minimum(new_redundancies, current_redundancies)
         current_weights += new_weights
 
-        current_redundancies[current_weights == 0] = 0
+        current_redundancies[current_weights < 1] = 0
         self.result_storage.update_redundancies(current_redundancies, current_weights)
 
     def _update_slices(self, new_slices):
@@ -145,10 +145,11 @@ class IncrementalCorrelation:
             score = self.subspace_contrast.calculate_contrast(subspace, target, False)
 
             for ft in subspace:
-                current_redundancy = min(new_redundancies.loc[ft, target], score)
-                new_redundancies.loc[ft, target] = current_redundancy
-                new_redundancies.loc[target, ft] = current_redundancy
+                redundancy = min(new_redundancies.loc[ft, target], score)
+                if redundancy == np.inf:
+                    raise AssertionError('should not be inf')
+                new_redundancies.loc[ft, target] = redundancy
+                new_redundancies.loc[target, ft] = redundancy
                 new_weights.loc[ft, target] = new_weights.loc[ft, target] + 1
                 new_weights.loc[target, ft] = new_weights.loc[target, ft] + 1
-
         self._update_redundancy_table(new_weights, new_redundancies)
