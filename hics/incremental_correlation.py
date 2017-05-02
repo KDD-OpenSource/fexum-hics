@@ -40,6 +40,9 @@ class IncrementalCorrelation:
     def _update_redundancy_table(self, new_weights, new_redundancies):
         current_redundancies, current_weights = self.result_storage.get_redundancies()
 
+        current_weights = current_weights.loc[new_weights.index, new_weights.columns]
+        current_redundancies = current_redundancies.loc[new_redundancies.index, new_redundancies.columns]
+
         current_redundancies[current_weights < 1] = np.inf
 
         current_redundancies = np.minimum(new_redundancies, current_redundancies)
