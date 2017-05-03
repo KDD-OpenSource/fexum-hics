@@ -38,6 +38,12 @@ class IncrementalCorrelation:
         self.result_storage.update_relevancies(current_relevancies)
 
     def _update_redundancy_table(self, new_weights, new_redundancies):
+        if ((new_weights != 0) & np.isinf(new_redundancies)).any().any():
+            raise AssertionError('inf in new_redundancy where new_weights not 0 (before)')
+
+        if ((new_weights == 0) & np.isfinite(new_redundancies)).any().any():
+            raise AssertionError('not inf in new_redundancy where new_weights 0')
+
         current_redundancies, current_weights = self.result_storage.get_redundancies()
 
         current_weights = current_weights.loc[new_weights.index, new_weights.columns]
@@ -45,10 +51,26 @@ class IncrementalCorrelation:
 
         current_redundancies[current_weights < 1] = np.inf
 
+        if ((current_weights != 0) & np.isinf(current_redundancies)).any().any():
+            raise AssertionError('inf in current_redundancy where current_weights not 0 (before)')
+
+        if ((current_weights == 0) & np.isfinite(current_redundancies)).any().any():
+            raise AssertionError('not inf in current_redundancy where current_weights 0 (before)')
+
         current_redundancies = np.minimum(new_redundancies, current_redundancies)
         current_weights += new_weights
 
+        if ((current_weights != 0) & np.isinf(current_redundancies)).any().any():
+            raise AssertionError('inf in current_redundancy where current_weights not 0 (after)')
+
+        if ((current_weights == 0) & np.isfinite(current_redundancies)).any().any():
+            raise AssertionError('not inf in current_redundancy where current_weights 0 (after)')
+
         current_redundancies[current_weights < 1] = 0
+
+        if np.isinf(current_redundancies).any().any():
+            raise AssertionError('remaining inf in current_redundancy')
+
         self.result_storage.update_redundancies(current_redundancies, current_weights)
 
     def _update_slices(self, new_slices):
@@ -149,8 +171,6 @@ class IncrementalCorrelation:
 
             for ft in subspace:
                 redundancy = min(new_redundancies.loc[ft, target], score)
-                if redundancy == np.inf:
-                    raise AssertionError('should not be inf')
                 new_redundancies.loc[ft, target] = redundancy
                 new_redundancies.loc[target, ft] = redundancy
                 new_weights.loc[ft, target] = new_weights.loc[ft, target] + 1
