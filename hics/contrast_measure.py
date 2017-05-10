@@ -6,7 +6,8 @@ from random import randint, shuffle
 
 
 class HiCS:
-    def __init__(self, data, alpha, iterations, continuous_divergence=KS, categorical_divergence=KLD):
+    def __init__(self, data, alpha, iterations, continuous_divergence=KS,
+                 categorical_divergence=KLD, categorical_features=None):
         self.iterations = iterations
         self.alpha = alpha
         self.data = data
@@ -17,19 +18,20 @@ class HiCS:
 
         self.types = {}
         self.values = {}
+
         for column in self.data.columns.values:
-            unique_values = np.unique(self.data[column])
+            feature_type = 'categorical'     # default assume categorical
+            unique_values = np.unique(data[column])
 
-            if self.data[column].dtype == 'object':
-                self.types[column] = 'categorical'
-                self.values[column] = unique_values
-
-            elif len(unique_values) < 15:
-                self.types[column] = 'categorical'
-                self.values[column] = unique_values
-
+            if categorical_features is not None:
+                if column not in categorical_features:
+                    feature_type = 'continuous'
             else:
-                self.types[column] = 'continuous'
+                feature_type = HiCS.dtype_heuristic(unique_values, data[column].dtype)
+
+            self.types[column] = feature_type
+            if feature_type == 'categorical':
+                self.values[column] = unique_values
 
     def get_values(self, feature):
         if feature not in self.values:
@@ -162,3 +164,14 @@ class HiCS:
             return avg_score, slices
         else:
             return avg_score
+
+    @staticmethod
+    def dtype_heuristic(unique_values, pandas_dtype):
+        if pandas_dtype == 'object':
+            return 'categorical'
+
+        elif len(pandas_dtype) < 10 and (np.mod(unique_values, 1) == 0).all():
+            return 'categorical'
+
+        else:
+            return 'continuous'
