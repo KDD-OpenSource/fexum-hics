@@ -2,23 +2,26 @@ import numpy as np
 import pandas as pd
 import sys
 from random import randint
-from hics.contrast_meassure import HiCS
+from hics.contrast_measure import HiCS
+from hics.scored_slices import ScoredSlices
 from hics.scored_slices import ScoredSlices
 from hics.result_storage import DefaultResultStorage
+from hics.divergences import KS, KLD
 
 
 class IncrementalCorrelation:
     def __init__(self, data, target, result_storage, iterations=10,
-                 alpha=0.1, drop_discrete=False):
-        self.subspace_contrast = HiCS(data, alpha, iterations)
+                 alpha=0.1, categorical_features=None,
+                 continuous_divergence=KS, categorical_divergence=KLD):
+
+        self.subspace_contrast = HiCS(data, alpha, iterations,
+                                      continuous_divergence=continuous_divergence,
+                                      categorical_divergence=categorical_divergence,
+                                      categorical_features=categorical_features)
 
         self.target = target
         self.features = [str(ft) for ft in data.columns.values
                          if str(ft) != target]
-
-        if drop_discrete:
-            self.features = [ft for ft in self.features
-                             if self.subspace_contrast.get_type(ft) != 'discrete']
 
         self.result_storage = result_storage
 
